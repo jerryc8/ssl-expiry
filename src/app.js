@@ -25,7 +25,7 @@ import sslChecker from "ssl-checker";
 
 const notifyBySlack = async (urgency, message) => {
   // TODO: implement webhook
-  console.log('notify invoked (to be implemented', urgency, message);
+  console.log('notify invoked (to be implemented):', urgency, message);
 };
 
 // Certificates are issued Thursdays UTC at unspecified time, but they should
@@ -44,8 +44,13 @@ const checkServer = async (address) => {
     sslPort = 8000;
   }
   // TODO: connection issues - ensure that the team is notified.
-  const result = await sslChecker(address, { method: "GET", port: sslPort });
-  console.log(`ssl-checker ${address}: `, result);
+  let result = null;
+  try {
+    result = await sslChecker(address, { method: "GET", port: sslPort });
+  } catch (error) {
+    await notifyBySlack('urgent', `Unable to connect to ${address}, error: ${error}`);
+    return;
+  }
 
   // Both the ssl-checker return value and new Date() are in UTC
   // Hence there is no need to account for timezone difference
@@ -77,6 +82,5 @@ const readInterface = readline.createInterface({
 });
 // TOIMPROVE - possible to batch parallelize the checks
 for await (const line of readInterface) {
-  console.log('checking address: ', line);
   await checkServer(line);
 }
