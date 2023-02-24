@@ -9,8 +9,10 @@
   "author": "JerryC",
   "license": "MIT",
   "dependencies": {
-    "eslint": "^8.34.0",
     "node-statsd": "^0.1.1",
     "ssl-checker": "^2.0.8"
+  },
+  "devDependencies": {
+    "eslint": "^8.34.0"
   }
 }
