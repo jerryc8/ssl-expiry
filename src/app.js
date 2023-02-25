@@ -4,6 +4,15 @@ import { StatsD } from "node-statsd";
 import { IncomingWebhook } from "@slack/webhook";
 import sslChecker from "ssl-checker";
 
+// Certificates are issued Thursdays UTC at unspecified time, but they should
+// already be valid from midnight Thursdays
+const EXPECTED_ISSUE_WEEKDAY = 'Thurs';
+const SERVER_ADDRESSES = 'ip_addresses.txt';
+const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX';
+const STATSD_ADDRESS = '10.10.4.14';
+const STATSD_PORT = 8125;
+const URGENT_EXPIRE_SOON_LIMIT_DAYS = 30;
+
 // from https://stackoverflow.com/a/59144918
 /**
  * @param {Date} date - the initial Date
@@ -23,7 +32,6 @@ import sslChecker from "ssl-checker";
   return d;
 }
 
-const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX';
 const webhook = new IncomingWebhook(SLACK_WEBHOOK_URL);
 const notifyBySlack = async (urgency, message) => {
   console.log('slack-notify:', urgency, message);
@@ -35,11 +43,6 @@ const notifyBySlack = async (urgency, message) => {
   }
   await webhook.send({ text });
 };
-
-// Certificates are issued Thursdays UTC at unspecified time, but they should
-// already be valid from midnight Thursdays
-const EXPECTED_ISSUE_WEEKDAY = 'Thurs';
-const URGENT_EXPIRE_SOON_LIMIT_DAYS = 30;
 
 const checkServer = async (address) => {
   let sslPort = 443;
@@ -90,7 +93,6 @@ const checkServer = async (address) => {
 
 // TOIMPROVE - if file is large, use `line-by-line` package to avoid
 // loading the entire file into memory
-const SERVER_ADDRESSES = 'ip_addresses.txt';
 const readInterface = readline.createInterface({
   input: fs.createReadStream(SERVER_ADDRESSES)
 });
@@ -108,8 +110,6 @@ for await (const line of readInterface) {
   }
 }
 
-const STATSD_ADDRESS = '10.10.4.14';
-const STATSD_PORT = 8125;
 // record how many unhealthy instances exist for each service
 const client = new StatsD(
   {
