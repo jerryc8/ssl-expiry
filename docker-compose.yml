@@ -1,16 +1,31 @@
 services:
-  europa-60:
-    container_name: europa-60
+  europa-10.10.6.60:
+    container_name: europa-10.10.6.60
     image: nginx
     networks:
       testenv:
         ipv4_address: 10.10.6.60
-  europa-235:
-    container_name: europa-235
+    volumes:
+      - /opt/ssl-expiry/nginx-confd/europa-10.10.6.60:/etc/nginx/conf.d
+  
+  callisto-10.10.8.164:
+    container_name: callisto-10.10.8.164
     image: nginx
     networks:
       testenv:
-        ipv4_address: 10.10.6.235
+        ipv4_address: 10.10.8.164
+    volumes:
+      - /opt/ssl-expiry/nginx-confd/callisto-10.10.8.164:/etc/nginx/conf.d
+  
+  europa-10.10.6.64:
+    container_name: europa-10.10.6.64
+    image: nginx
+    networks:
+      testenv:
+        ipv4_address: 10.10.6.64
+    volumes:
+      - /opt/ssl-expiry/nginx-confd/europa-10.10.6.64:/etc/nginx/conf.d
+  
   ssl-expiry:
     container_name: ssl-expiry
     image: node:16-alpine
