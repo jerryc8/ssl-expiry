@@ -9,8 +9,15 @@ while read address; do
   else
       servicename='callisto'
   fi
+  last_digit=${address: -1}
+  modres=`expr $last_digit % 2`;
   echo "Generating config for $servicename-$address"
   validity=29
+  if [[ $modres -eq 1 ]]
+  then
+    # longer duration if ip ends with an odd number
+    validity=60
+  fi
   mkdir -p nginx-confd/$servicename-$address
   # inspired by https://serverfault.com/a/650008
   openssl genrsa -aes256 -out /tmp/client1.key -passout pass:client11 2048
