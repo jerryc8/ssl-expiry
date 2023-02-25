@@ -10,7 +10,7 @@
   "author": "JerryC",
   "license": "MIT",
   "dependencies": {
-    "node-statsd": "^0.1.1",
+    "hot-shots": "^10.0.0",
     "ssl-checker": "^2.0.8"
   },
   "devDependencies": {
