@@ -53,7 +53,8 @@ const notifyBySlack = async (urgency, message) => {
 const checkServer = async (address) => {
   let sslPort = 443;
   let service = 'Unknown';
-  // TOIMPROVE: string comparison works only because of /24, use an IP address library instead
+  // TOIMPROVE: use `ip-subnet-calculator` package instead, string comparison
+  // is hacky because it works only because of /24
   if (address.startsWith('10.10.6.')) {
     service = 'Europa';
     sslPort = 4000;
