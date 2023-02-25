@@ -61,6 +61,5 @@ root@296c75372f7d:/# curl -k https://callisto-10.10.8.164 -vI --stderr - | grep 
 ```
 
 ## Missing work
-- use a subnet calculator such as `ip-subnet-calculator` package instead of substrings to check for service membership such as callisto vs europa
 - to provide more instructions about how to use the `node` container (inside `testenv` network) to run the script
 - not sure how to create self signed certificates that has a start date or end date in the past?

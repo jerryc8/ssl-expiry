@@ -1,9 +1,12 @@
 import fs from "fs";
 import readline from "readline";
 import { StatsD } from "hot-shots";
+import { Netmask } from "netmask";
 import { IncomingWebhook } from "@slack/webhook";
 import sslChecker from "ssl-checker";
 
+const CALLISTO_SUBNET = '10.10.8.0/24';
+const EUROPA_SUBNET = '10.10.6.0/24';
 // Certificates are issued Thursdays UTC at unspecified time, but they should
 // already be valid from midnight Thursdays
 const EXPECTED_ISSUE_WEEKDAY = 'Thurs';
@@ -50,16 +53,17 @@ const notifyBySlack = async (urgency, message) => {
   }
 };
 
+const europaBlock = new Netmask(EUROPA_SUBNET);
+const callistoBlock = new Netmask(CALLISTO_SUBNET);
 const checkServer = async (address) => {
   let sslPort = 443;
   let service = 'Unknown';
-  // TOIMPROVE: use `ip-subnet-calculator` package instead, string comparison
-  // is hacky because it works only because of /24
-  if (address.startsWith('10.10.6.')) {
-    service = 'Europa';
+
+  if (europaBlock.contains(address)) {
+    service = 'europa';
     sslPort = 4000;
-  } else if (address.startsWith('10.10.8.')) {
-    service = 'Callisto';
+  } else if (callistoBlock.contains(address)) {
+    service = 'callisto';
     sslPort = 8000;
   }
 
