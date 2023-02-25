@@ -25,6 +25,8 @@ The `SLACK_WEBHOOK_URL` in this source tree is likely incorrect, hence to run wi
 - Use `scripts/create-compose-fragment.sh` to generate more containers to put into `docker-compose.yml`
 
 ### Using docker-compose
+Before running `docker-compose`, please edit `docker-compose.yml` and replace `/opt/ssl-expiry/nginx-confd/` with the actual path where the certificate/private key files are located on the docker host.
+
 To start the Test Environment on a machine with docker and docker-compose installed:
 ```
 $ docker-compose up -d
