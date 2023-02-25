@@ -1,6 +1,6 @@
 import fs from "fs";
 import readline from "readline";
-// import { StatsD } from "node-statsd";
+import { StatsD } from "node-statsd";
 import sslChecker from "ssl-checker";
 
 // from https://stackoverflow.com/a/59144918
@@ -98,8 +98,18 @@ for await (const line of readInterface) {
     }
   }
 }
+
+const STATSD_ADDRESS = '10.10.4.14';
+const STATSD_PORT = 8125;
 // record how many unhealthy instances exist for each service
+const client = new StatsD(
+  {
+      host: STATSD_ADDRESS,
+      port: STATSD_PORT
+  }
+);
 for (const service of Object.keys(unhealthyCounts)) {
   const c = unhealthyCounts[service];
   console.log(`service ${service}: ${c} unhealthy`);
+  client.gauge(`certcheck_${service}`, c);
 }
