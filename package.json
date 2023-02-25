@@ -10,6 +10,7 @@
   "author": "JerryC",
   "license": "MIT",
   "dependencies": {
+    "@slack/webhook": "^6.1.0",
     "hot-shots": "^10.0.0",
     "ssl-checker": "^2.0.8"
   },

@@ -1,6 +1,7 @@
 import fs from "fs";
 import readline from "readline";
 import { StatsD } from "node-statsd";
+import { IncomingWebhook } from "@slack/webhook";
 import sslChecker from "ssl-checker";
 
 // from https://stackoverflow.com/a/59144918
@@ -22,9 +23,17 @@ import sslChecker from "ssl-checker";
   return d;
 }
 
+const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX';
+const webhook = new IncomingWebhook(SLACK_WEBHOOK_URL);
 const notifyBySlack = async (urgency, message) => {
-  // TODO: implement webhook
-  console.log('notify invoked (to be implemented):', urgency, message);
+  console.log('slack-notify:', urgency, message);
+  let text = message;
+  if (urgency === 'urgent') {
+    text = `URGENT: ${message}`;
+  } else if (urgency === 'extreme') {
+    text = `EXTREMELY URGENT! ${message}`;
+  }
+  await webhook.send({ text });
 };
 
 // Certificates are issued Thursdays UTC at unspecified time, but they should
