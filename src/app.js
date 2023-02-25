@@ -1,6 +1,6 @@
 import fs from "fs";
 import readline from "readline";
-import { StatsD } from "node-statsd";
+import { StatsD } from "hot-shots";
 import { IncomingWebhook } from "@slack/webhook";
 import sslChecker from "ssl-checker";
 
@@ -12,6 +12,8 @@ const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/T00000000/B00000000/
 const STATSD_ADDRESS = '10.10.4.14';
 const STATSD_PORT = 8125;
 const URGENT_EXPIRE_SOON_LIMIT_DAYS = 30;
+
+const DISABLE_SLACK = process.env.DISABLE_SLACK;
 
 // from https://stackoverflow.com/a/59144918
 /**
@@ -41,7 +43,11 @@ const notifyBySlack = async (urgency, message) => {
   } else if (urgency === 'extreme') {
     text = `EXTREMELY URGENT! ${message}`;
   }
-  await webhook.send({ text });
+  if (DISABLE_SLACK) {
+    console.log(text);
+  } else {
+    await webhook.send({ text });
+  }
 };
 
 const checkServer = async (address) => {
@@ -55,13 +61,13 @@ const checkServer = async (address) => {
     service = 'Callisto';
     sslPort = 8000;
   }
-  // TODO: connection issues - ensure that the team is notified.
+
   let result = null;
   try {
     result = await sslChecker(address, { method: "GET", port: sslPort });
   } catch (error) {
     await notifyBySlack('urgent', `Unable to connect to ${address}, error: ${error}`);
-    return { service, healthy: false };
+    return { service, problem: 'unconnectable' };
   }
 
   // Both the ssl-checker return value and new Date() are in UTC
@@ -73,22 +79,23 @@ const checkServer = async (address) => {
   const diffTime = expiryDate - now;
   if (diffTime < 0) {
     await notifyBySlack('extreme', `Certificate for server ${address} expired on: ${expiryDate.toISOString()}, please re-issue immediately`);
-    return { service, healthy: false };
+    return { service, problem: 'expired' };
   }
 
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   if (diffDays > URGENT_EXPIRE_SOON_LIMIT_DAYS) {
-    await notifyBySlack('urgent', `Certificate for server ${address} will expire (< ${URGENT_EXPIRE_SOON_LIMIT_DAYS} days): ${expiryDate.toISOString()}`);
-    return { service, healthy: false };
+    await notifyBySlack('urgent', `Certificate for server ${address} expiring soon (< ${URGENT_EXPIRE_SOON_LIMIT_DAYS} days): ${expiryDate.toISOString()}`);
+    return { service, problem: 'expiring' };
   }
   // eg, validFrom: "2023-02-08T04:36:30.000Z"
   const issueDate = new Date(Date.parse(result.validFrom));
   const expectedIssueDate = getLastDayOccurence(now, EXPECTED_ISSUE_WEEKDAY);
   if (issueDate < expectedIssueDate) {
-    await notifyBySlack('normal', `Certificate for server ${address} were not re-issued, issued: ${issueDate.toISOString()} (expected ${expectedIssueDate.toISOString()} or later)`);
+    await notifyBySlack('normal', `Certificate for server ${address} is outdated, issued: ${issueDate.toISOString()} (expected ${expectedIssueDate.toISOString()} or later)`);
+    return { service, problem: 'outdated' };
   }
   // still considered healthy even if recent issuance did not happen
-  return { service, healthy: true };
+  return { service, problem: null };
 };
 
 // TOIMPROVE - if file is large, use `line-by-line` package to avoid
@@ -99,17 +106,18 @@ const readInterface = readline.createInterface({
 // TOIMPROVE - possible to batch parallelize the checks
 const unhealthyCounts = {};
 for await (const line of readInterface) {
-  const {service, healthy} = await checkServer(line);
-  if (!healthy) {
-    const count = unhealthyCounts[service];
+  const {service, problem} = await checkServer(line);
+  if (problem) {
+    const key = `${service}.${problem}`;
+    const count = unhealthyCounts[key];
     if (Number.isInteger(count)) {
-      unhealthyCounts[service] += 1;
+      unhealthyCounts[key] += 1;
     } else {
-      unhealthyCounts[service] = 1;
+      unhealthyCounts[key] = 1;
     }
   }
 }
-
+console.log('debug: for statsd: ', unhealthyCounts);
 // record how many unhealthy instances exist for each service
 const client = new StatsD(
   {
@@ -117,8 +125,8 @@ const client = new StatsD(
       port: STATSD_PORT
   }
 );
-for (const service of Object.keys(unhealthyCounts)) {
-  const c = unhealthyCounts[service];
-  console.log(`service ${service}: ${c} unhealthy`);
-  client.gauge(`certcheck_${service}`, c);
+for (const statskey of Object.keys(unhealthyCounts)) {
+  const c = unhealthyCounts[statskey];
+  console.log(`stat ${statskey}: ${c} unhealthy`);
+  client.gauge(`cert.${statskey}`, c);
 }
