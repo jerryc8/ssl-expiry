@@ -62,8 +62,8 @@ root@296c75372f7d:/# curl -k https://callisto-10.10.8.164 -vI --stderr - | grep 
 
 ## Missing work / Possible future work
 - to provide more instructions about how to use the `node` container (inside `testenv` network) to run the script
-- not sure how to create self signed certificates that has a start date or end date in the past?
-use a logger such as ​`Morgan` or Winston​, so it can be integrated more easily with external tools such as datadog
+- not sure how to create self signed certificates that has a start date or end date in the past? (a hacky way would be to change the system date then run `openssl`, but that would be difficult to automate)
+- use a logger such as ​`Morgan` or Winston​, so it can be integrated more easily with external tools such as datadog
 - performance: batch the server checks into batches of size N, and test N servers in parallel at a time (current script performs the server checks serially, one check at a time)
 
 ## Questions and answers
