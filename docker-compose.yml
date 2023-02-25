@@ -1,0 +1,31 @@
+services:
+  europa-60:
+    container_name: europa-60
+    image: nginx
+    networks:
+      testenv:
+        ipv4_address: 10.10.6.60
+  europa-235:
+    container_name: europa-235
+    image: nginx
+    networks:
+      testenv:
+        ipv4_address: 10.10.6.235
+  ssl-expiry:
+    container_name: ssl-expiry
+    image: node:16-alpine
+    networks:
+      testenv:
+        ipv4_address: 10.10.4.101
+  statsd:
+    container_name: statsd
+    image: hopsoft/graphite-statsd
+    networks:
+      testenv:
+        ipv4_address: 10.10.4.14
+networks:
+  testenv:
+    ipam:
+      config:
+          -
+            subnet: 10.10.0.0/16
